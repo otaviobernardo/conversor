@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Música</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="https://favicon.io/emoji-favicons/musical-note/favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(45deg, #6a1b9a, #ffeb3b);
+            background-size: 400% 400%;
+            animation: gradient 5s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 30px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        button:hover {
+            background-color: #4a148c;
+        }
+
+        #mensagens {
+            margin-top: 20px;
+        }
+
+        #mensagens p {
+            margin: 10px 0;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        /* Mensagem de sucesso - cor verde */
+        .mensagem-sucesso {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* Mensagem de erro - cor vermelha */
+        .mensagem-erro {
+            background-color: #f44336;
+            color: white;
+        }
+
+        /* Mensagem de já existente - cor amarela */
+        .mensagem-existente {
+            background-color: #FFEB3B;
+            color: black;
+        }
+
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-animation {
+            border: 10px solid #f3f3f3;
+            border-top: 10px solid #6a1b9a;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversor de Músicas para MP3</h1>
+        <form id="music-form">
+            <label for="urls">Cole as URLs das músicas (separadas por vírgula):</label>
+            <input type="text" id="urls" name="urls" required>
+
+            <label for="pendrive">Selecione o diretório do pendrive:</label>
+            <input type="text" id="pendrive" name="pendrive" required>
+
+            <button type="submit">Baixar Músicas</button>
+        </form>
+
+        <div id="mensagens">
+            <!-- As mensagens de sucesso ou erro aparecerão aqui -->
+        </div>
+    </div>
+
+    <div id="loader">
+        <div class="loader-animation"></div>
+    </div>
+
+    <script>
+        document.getElementById('music-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const urls = document.getElementById('urls').value;
+            const pendrive = document.getElementById('pendrive').value;
+
+            // Mostrar o loader
+            document.getElementById('loader').style.display = 'flex';
+
+            fetch('/baixar', {
+                method: 'POST',
+                body: new URLSearchParams({ 'urls': urls, 'pendrive': pendrive }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const mensagensDiv = document.getElementById('mensagens');
+                mensagensDiv.innerHTML = '';  // Limpar mensagens antigas
+
+                data.mensagens.forEach(msg => {
+                    const p = document.createElement('p');
+                    p.textContent = msg;
+
+                    // Verificar o tipo de mensagem e adicionar a classe correspondente
+                    if (msg.includes("sucesso")) {
+                        p.classList.add('mensagem-sucesso');
+                    } else if (msg.includes("erro")) {
+                        p.classList.add('mensagem-erro');
+                    } else if (msg.includes("já está")) {
+                        p.classList.add('mensagem-existente');
+                    }
+
+                    mensagensDiv.appendChild(p);
+                });
+
+                // Esconder o loader após o processo
+                document.getElementById('loader').style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                // Esconder o loader em caso de erro
+                document.getElementById('loader').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
